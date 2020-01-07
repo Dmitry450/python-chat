@@ -88,15 +88,3 @@ while True:
         if i == "quit": break
         if i:
             c.send(bytes("message:"+i, 'utf-8'))
-
-'''
-sock = socket.socket()
-
-sock.connect(("2.42.21.1", 2048))
-
-sock.send(b"Test")
-
-sock.send(b'')
-
-sock.close()
-'''
