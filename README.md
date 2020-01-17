@@ -11,3 +11,5 @@ Starting:
 
 You also can configurate server in server_conf.json.
 If it don't exists, run and then stop server
+
+On windows run "pip install windows-curses" in cmd
