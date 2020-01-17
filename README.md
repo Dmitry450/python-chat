@@ -8,3 +8,6 @@ Starting:
 (If you wanna use nickname instead ip, use flag -n \<your name\>)
 4. Type \<server ip\>:5050
 5. Let conversation start!
+
+You also can configurate server in server_conf.json.
+If it don't exists, run and then stop server
