@@ -1,6 +1,7 @@
 import socket
 import time
 import threading
+import json
 
 class ConnectionThread(threading.Thread):
     """
@@ -49,7 +50,7 @@ class Server:
         self.parse_data_func = parse_data_func
     
     def initialise(self, port = 43210, max_connected = 1):
-        self.socket.bind(('0.0.0.0', port))
+        self.socket.bind(('', port))
         self.socket.listen(max_connected)
         self.max_connected = max_connected
     
@@ -63,10 +64,11 @@ class Server:
         conn, addr = self.socket.accept()
         print(time.strftime('[SERVER] [%D|%H:%M:%S] - connection: ', time.localtime(time.time())), end='')
         print(addr[0])
-        conn.send(b"Welcome to server")
+        conn.send(bytes(data['greeting'], 'utf-8'))
         connthr = ConnectionThread(conn, addr[0], self.parse_data_func)
         connthr.start()
         self.connections.append(connthr)
+        data_to_send.append({"data": bytes(f"{connthr.addr} "+"joined to chat", 'utf-8'), "excludeConnections":[connthr]})
     
     def sendDataToConnections(self, data: bytes, excludeConnections=[]):
         """
@@ -80,6 +82,7 @@ class Server:
             except ConnectionResetError:
                 print(time.strftime('[SERVER] [%D|%H:%M:%S] - disconnected: ', time.localtime(time.time())), end='')
                 print(conn.addr)
+                data_to_send.append({"data": bytes(f"{conn.addr} "+"disconnected", 'utf-8'), "excludeConnections":[conn]})
                 conn.disconnected = True
     
     def checkConnections(self):
@@ -89,6 +92,7 @@ class Server:
         for conn in self.connections:
             if conn.disconnected:
                 conn.join()
+                data_to_send.append({"data": bytes(f"{conn.addr} "+"disconnected", 'utf-8'), "excludeConnections":[conn]})
                 self.connections.remove(conn)
     
     def autoupdate(self):
@@ -101,15 +105,29 @@ class Server:
         except BlockingIOError:
             pass # If there aren't new connections
         s.checkConnections()
+    
+    def clear(self):
+        for conn in self.connections:
+            conn.connection.send(b"Server closed")
+            conn.stop()
+            conn.join()
 
-# Using test
+try:
+    file = open("server_conf.json")
+    data = json.load(file)
+except:
+    file = open("server_conf.json", 'w')
+    data = {
+        'PORT':5050,
+        'MAX_CONNECTIONS':8,
+        'greeting':'Welcome to server',
+    }
+    json.dump(data, file)
+finally:
+    file.close()
 
-###########################
-
-PORT = 5050
-MAX_CONNECTED = 8
-
-###########################
+PORT = data["PORT"]
+MAX_CONNECTED = data["MAX_CONNECTIONS"]
 
 data_to_send = []
 
@@ -138,5 +156,6 @@ try:
             s.sendDataToConnections(data=d["data"], excludeConnections=d["excludeConnections"])
             data_to_send.remove(d)
 except KeyboardInterrupt:
+    s.clear()
     print("\rServer stopped")
     raise SystemExit(0)
