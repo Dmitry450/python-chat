@@ -13,3 +13,5 @@ You also can configurate server in server_conf.json.
 If it don't exists, run and then stop server
 
 On windows run "pip install windows-curses" in cmd
+
+You don't need to open port if you chating in local network (but who needs this?)
